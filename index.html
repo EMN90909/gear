@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibrant HTML Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6d28d9;
+            --primary-light: #8b5cf6;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --info: #0ea5e9;
+            --dark: #1e293b;
+            --light: #ffffff;
+            --background: #f8fafc;
+            --card: #ffffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            color: #334155;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
+            border: none;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 20px 60px rgba(109, 40, 217, 0.2);
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 25px 30px;
+            border-bottom: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-header::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--info));
+        }
+        
+        .card-body {
+            padding: 30px;
+        }
+        
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 14px;
+        }
+        
+        .input-control {
+            width: 100%;
+            padding: 14px 18px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            color: #334155;
+            font-size: 16px;
+            font-family: 'Rubik', sans-serif;
+            transition: all 0.3s;
+        }
+        
+        .input-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 4px rgba(109, 40, 217, 0.1);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            gap: 10px;
+            font-family: 'Rubik', sans-serif;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(90deg, var(--primary-light), var(--primary));
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(109, 40, 217, 0.3);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background: #f5f3ff;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(109, 40, 217, 0.1);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+        
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .template-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
+        }
+        
+        .template-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+            border-color: var(--primary-light);
+        }
+        
+        .template-item.active {
+            border-color: var(--primary);
+            background: rgba(109, 40, 217, 0.05);
+            box-shadow: 0 8px 15px rgba(109, 40, 217, 0.1);
+            transform: translateY(-3px);
+        }
+        
+        .template-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            transition: all 0.3s;
+        }
+        
+        .template-item.active .template-icon {
+            color: white;
+        }
+        
+        .tab-container {
+            margin-top: 25px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            position: relative;
+            color: #94a3b8;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-radius: 8px 8px 0 0;
+            font-family: 'Rubik', sans-serif;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+        }
+        
+        .tab.active:after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        #customCSS {
+            width: 100%;
+            height: 200px;
+            background: #f8fafc;
+            color: #334155;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        .preview-container {
+            height: 400px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 20px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .preview-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 16px 32px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .message-box.show {
+            opacity: 1;
+        }
+        
+        .message-box.success {
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+        
+        .message-box.error {
+            color: #ef4444;
+            border-left: 4px solid #ef4444;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+            margin-left: 10px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        .switch-label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .switch-text {
+            font-size: 15px;
+            color: #475569;
+            font-weight: 500;
+        }
+        
+        .template-preview {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .preview-sample {
+            width: 60px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .preview-sample:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .preview-sample.active {
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.2);
+        }
+        
+        .dark-preview { background: linear-gradient(135deg, #4f46e5, #0ea5e9); }
+        .light-preview { background: linear-gradient(135deg, #f8fafc, #e2e8f0); }
+        .professional-preview { background: linear-gradient(135deg, #3b82f6, #10b981); }
+        .minimal-preview { background: linear-gradient(135deg, #ffffff, #f1f5f9); }
+        .creative-preview { background: linear-gradient(135deg, #ec4899, #8b5cf6); }
+        .custom-preview { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+        
+        .editor-container {
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+        
+        .tips-box {
+            background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+            border-radius: 16px;
+            padding: 25px;
+            border: 2px solid #ede9fe;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+        }
+        
+        .tips-box h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .tips-box ul {
+            list-style: none;
+        }
+        
+        .tips-box li {
+            padding: 8px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .tips-box li i {
+            color: var(--success);
+            margin-top: 4px;
+        }
+        
+        .output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .output-header h2 {
+            color: var(--primary);
+            font-size: 22px;
+            font-weight: 700;
+        }
+        
+        .template-badge {
+            background: rgba(109, 40, 217, 0.1);
+            color: var(--primary);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .bubble-1 {
+            width: 100px;
+            height: 100px;
+            top: -30px;
+            right: -20px;
+        }
+        
+        .bubble-2 {
+            width: 70px;
+            height: 70px;
+            bottom: -20px;
+            left: 40px;
+        }
+        
+        .bubble-3 {
+            width: 50px;
+            height: 50px;
+            top: 30px;
+            left: 30%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div class="bubble bubble-1"></div>
+                <div class="bubble bubble-2"></div>
+                <div class="bubble bubble-3"></div>
+                <h1 class="text-3xl font-bold"><i class="fas fa-magic mr-3"></i>Vibrant HTML Converter</h1>
+                <p class="opacity-90 mt-2">Create stunning HTML documents with colorful templates</p>
+            </div>
+            
+            <div class="card-body">
+                <div class="grid-layout">
+                    <!-- Left Column: Settings -->
+                    <div class="settings-column">
+                        <div class="form-group">
+                            <label for="docTitleInput"><i class="fas fa-heading mr-2"></i>Document Title</label>
+                            <input type="text" id="docTitleInput" class="input-control" placeholder="My Awesome Document" value="My Project Documentation">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fileNameInput"><i class="fas fa-file-signature mr-2"></i>File Name</label>
+                            <input type="text" id="fileNameInput" class="input-control" placeholder="document.html" value="my-document.html">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-palette mr-2"></i>Template Selection</label>
+                            <div class="template-grid">
+                                <div class="template-item active" data-template="professional">
+                                    <div class="template-icon"><i class="fas fa-briefcase"></i></div>
+                                    <div>Professional</div>
+                                </div>
+                                <div class="template-item" data-template="minimal">
+                                    <div class="template-icon"><i class="fas fa-file-alt"></i></div>
+                                    <div>Minimal</div>
+                                </div>
+                                <div class="template-item" data-template="dark">
+                                    <div class="template-icon"><i class="fas fa-moon"></i></div>
+                                    <div>Dark Mode</div>
+                                </div>
+                                <div class="template-item" data-template="light">
+                                    <div class="template-icon"><i class="fas fa-sun"></i></div>
+                                    <div>Light</div>
+                                </div>
+                                <div class="template-item" data-template="creative">
+                                    <div class="template-icon"><i class="fas fa-paint-brush"></i></div>
+                                    <div>Creative</div>
+                                </div>
+                                <div class="template-item" data-template="custom">
+                                    <div class="template-icon"><i class="fas fa-cogs"></i></div>
+                                    <div>Custom</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="headerInput"><i class="fas fa-header mr-2"></i>Header Text</label>
+                            <input type="text" id="headerInput" class="input-control" placeholder="My Document Header" value="Project Documentation">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="footerInput"><i class="fas fa-shoe-prints mr-2"></i>Footer Text</label>
+                            <input type="text" id="footerInput" class="input-control" placeholder="Copyright © 2023" value="Generated with HTML Converter">
+                        </div>
+                        
+                        <div class="switch-label">
+                            <span class="switch-text">Include Header/Footer</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="headerFooterToggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="switch-label">
+                            <span class="switch-text">Responsive Design</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="responsiveToggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-eye-dropper mr-2"></i>Template Preview</label>
+                            <div class="template-preview">
+                                <div class="preview-sample dark-preview" data-template="dark" title="Dark Mode"></div>
+                                <div class="preview-sample light-preview" data-template="light" title="Light"></div>
+                                <div class="preview-sample professional-preview" data-template="professional" title="Professional"></div>
+                                <div class="preview-sample minimal-preview" data-template="minimal" title="Minimal"></div>
+                                <div class="preview-sample creative-preview" data-template="creative" title="Creative"></div>
+                                <div class="preview-sample custom-preview" data-template="custom" title="Custom"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Editor & Output -->
+                    <div class="output-column">
+                        <div class="output-header">
+                            <h2><i class="fas fa-code mr-2"></i>Editor & Preview</h2>
+                            <div class="template-badge" id="currentTemplate">Professional</div>
+                        </div>
+                        
+                        <div class="tab-container">
+                            <div class="tabs">
+                                <div class="tab active" data-tab="editor">Editor</div>
+                                <div class="tab" data-tab="css">Custom CSS</div>
+                                <div class="tab" data-tab="preview">Preview</div>
+                            </div>
+                            
+                            <div class="tab-content active" id="editor-tab">
+                                <div class="editor-container">
+                                    <div id="editor-container" class="h-96"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-content" id="css-tab">
+                                <label for="customCSS">Custom CSS Styles</label>
+                                <textarea id="customCSS">/* Add your custom CSS here */
+.content-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+h1, h2, h3 {
+    color: var(--primary);
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+p {
+    line-height: 1.6;
+    margin-bottom: 15px;
+}</textarea>
+                            </div>
+                            
+                            <div class="tab-content" id="preview-tab">
+                                <div class="preview-container">
+                                    <iframe id="previewFrame" class="preview-frame"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button id="downloadBtn" class="btn btn-primary flex-1">
+                                <i class="fas fa-download"></i> Download HTML
+                            </button>
+                            <button id="copyBtn" class="btn btn-secondary">
+                                <i class="fas fa-copy"></i> Copy Code
+                            </button>
+                            <button id="previewBtn" class="btn btn-secondary">
+                                <i class="fas fa-eye"></i> Live Preview
+                            </button>
+                        </div>
+                        
+                        <div class="tips-box mt-6">
+                            <h3><i class="fas fa-lightbulb mr-2"></i>Tips & Best Practices</h3>
+                            <ul class="space-y-1">
+                                <li><i class="fas fa-check-circle"></i> Use semantic HTML for better accessibility</li>
+                                <li><i class="fas fa-check-circle"></i> Keep CSS in external files for maintainability</li>
+                                <li><i class="fas fa-check-circle"></i> Test responsiveness on multiple devices</li>
+                                <li><i class="fas fa-check-circle"></i> Optimize images for faster loading</li>
+                                <li><i class="fas fa-check-circle"></i> Validate your HTML with W3C validator</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="messageBox" class="message-box">
+        <i class="fas fa-check-circle"></i>
+        <span>Success! Your file has been downloaded.</span>
+    </div>
+
+    <script>
+        // Initialize Quill editor
+        const quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Start typing your content here...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'align': [] }],
+                    ['link', 'image', 'video'],
+                    ['clean']
+                ]
+            }
+        });
+        
+        // Set initial content
+        quill.root.innerHTML = `
+            <h1>Welcome to Your Document</h1>
+            <p>This is a sample document created with the <strong>Vibrant HTML Converter</strong>. You can edit this content using the toolbar above.</p>
+            <p>Try different templates from the left panel to see how your document transforms!</p>
+            <h2>Features</h2>
+            <ul>
+                <li>Easy to use WYSIWYG editor</li>
+                <li>Multiple beautiful templates</li>
+                <li>Custom CSS styling</li>
+                <li>Real-time preview</li>
+                <li>One-click download</li>
+            </ul>
+        `;
+        
+        // DOM References
+        const docTitleInput = document.getElementById('docTitleInput');
+        const fileNameInput = document.getElementById('fileNameInput');
+        const headerInput = document.getElementById('headerInput');
+        const footerInput = document.getElementById('footerInput');
+        const customCSS = document.getElementById('customCSS');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const previewBtn = document.getElementById('previewBtn');
+        const messageBox = document.getElementById('messageBox');
+        const templateItems = document.querySelectorAll('.template-item');
+        const previewSamples = document.querySelectorAll('.preview-sample');
+        const headerFooterToggle = document.getElementById('headerFooterToggle');
+        const responsiveToggle = document.getElementById('responsiveToggle');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const previewFrame = document.getElementById('previewFrame');
+        const currentTemplate = document.getElementById('currentTemplate');
+        
+        // Template definitions
+        const templates = {
+            professional: {
+                name: "Professional",
+                styles: `
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        line-height: 1.6;
+                        color: #334155;
+                        background-color: #f8f9fa;
+                    }
+                    .content-container {
+                        max-width: 800px;
+                        margin: 40px auto;
+                        padding: 40px;
+                        background: white;
+                        border-radius: 12px;
+                        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+                    }
+                    header {
+                        background: linear-gradient(90deg, #4f46e5, #0ea5e9);
+                        color: white;
+                        padding: 30px;
+                        text-align: center;
+                        border-radius: 12px 12px 0 0;
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                    }
+                    footer {
+                        background: #1e293b;
+                        color: #cbd5e1;
+                        text-align: center;
+                        padding: 20px;
+                        margin-top: 40px;
+                        border-radius: 0 0 12px 12px;
+                        font-size: 0.9rem;
+                    }
+                    h1, h2, h3 {
+                        color: #4f46e5;
+                        margin-top: 30px;
+                        margin-bottom: 15px;
+                    }
+                    h1 {
+                        border-bottom: 2px solid #e2e8f0;
+                        padding-bottom: 10px;
+                    }
+                    p {
+                        margin-bottom: 15px;
+                        color: #475569;
+                    }
+                `
+            },
+            minimal: {
+                name: "Minimal",
+                styles: `
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                        line-height: 1.7;
+                        color: #334155;
+                        background-color: #fff;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 40px 20px;
+                    }
+                    header, footer {
+                        text-align: center;
+                        padding: 30px 0;
+                        color: #64748b;
+                    }
+                    h1, h2, h3 {
+                        font-weight: 600;
+                        margin-top: 40px;
+                        margin-bottom: 20px;
+                        color: #1e293b;
+                    }
+                    p {
+                        margin-bottom: 20px;
+                        color: #475569;
+                    }
+                `
+            },
+            dark: {
+                name: "Dark Mode",
+                styles: `
+                    body {
+                        font-family: 'Inter', sans-serif;
+                        line-height: 1.7;
+                        color: white; /* All text white */
+                        background: linear-gradient(135deg, #0f172a, #1e293b);
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .content-container {
+                        max-width: 800px;
+                        margin: 50px auto;
+                        padding: 40px;
+                        background: rgba(30, 41, 59, 0.8);
+                        backdrop-filter: blur(10px);
+                        border-radius: 16px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+                    }
+                    header {
+                        background: linear-gradient(90deg, #4f46e5, #7c3aed);
+                        color: white;
+                        padding: 30px;
+                        text-align: center;
+                        border-radius: 16px 16px 0 0;
+                        margin-bottom: 30px;
+                    }
+                    footer {
+                        background: #1e293b;
+                        color: #94a3b8;
+                        text-align: center;
+                        padding: 20px;
+                        margin-top: 40px;
+                        border-radius: 0 0 16px 16px;
+                        border-top: 1px solid #334155;
+                    }
+                    h1, h2, h3 {
+                        color: #a5b4fc;
+                        margin-top: 30px;
+                        margin-bottom: 15px;
+                    }
+                    p {
+                        color: white;
+                        line-height: 1.7;
+                    }
+                    a {
+                        color: #818cf8;
+                    }
+                    a:hover {
+                        color: #a5b4fc;
+                    }
+                `
+            },
+            light: {
+                name: "Light",
+                styles: `
+                    body {
+                        font-family: 'Inter', sans-serif;
+                        line-height: 1.7;
+                        color: #334155;
+                        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+                        min-height: 100vh;
+                    }
+                    .content-container {
+                        max-width: 800px;
+                        margin: 40px auto;
+                        padding: 40px;
+                        background: white;
+                        border-radius: 16px;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+                    }
+                    header {
+                        background: #f8fafc;
+                        color: #0f172a;
+                        padding: 30px;
+                        text-align: center;
+                        border-bottom: 1px solid #e2e8f0;
+                        margin-bottom: 30px;
+                        border-radius: 16px 16px 0 0;
+                    }
+                    footer {
+                        background: #f8fafc;
+                        color: #64748b;
+                        text-align: center;
+                        padding: 20px;
+                        margin-top: 40px;
+                        border-top: 1px solid #e2e8f0;
+                        border-radius: 0 0 16px 16px;
+                    }
+                    h1, h2, h3 {
+                        color: #0ea5e9;
+                        margin-top: 30px;
+                        margin-bottom: 20px;
+                    }
+                    p {
+                        color: #475569;
+                        line-height: 1.7;
+                    }
+                `
+            },
+            creative: {
+                name: "Creative",
+                styles: `
+                    body {
+                        font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
+                        line-height: 1.7;
+                        color: #2d3748;
+                        background: linear-gradient(135deg, #fdf2f8, #f0f9ff);
+                    }
+                    .content-container {
+                        max-width: 800px;
+                        margin: 40px auto;
+                        padding: 40px;
+                        background: white;
+                        border-radius: 20px;
+                        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+                        border: 3px solid #fbcfe8;
+                    }
+                    header {
+                        background: linear-gradient(90deg, #ec4899, #8b5cf6);
+                        color: white;
+                        padding: 30px;
+                        text-align: center;
+                        border-radius: 16px 16px 0 0;
+                        margin-bottom: 30px;
+                        font-size: 1.8rem;
+                        font-weight: bold;
+                    }
+                    footer {
+                        background: #8b5cf6;
+                        color: #fbcfe8;
+                        text-align: center;
+                        padding: 20px;
+                        margin-top: 40px;
+                        border-radius: 0 0 16px 16px;
+                        font-size: 1rem;
+                    }
+                    h1 {
+                        color: #ec4899;
+                        text-align: center;
+                        font-size: 2.5rem;
+                        text-shadow: 2px 2px 0px #fbcfe8;
+                        margin: 30px 0;
+                    }
+                    h2 {
+                        color: #8b5cf6;
+                        border-bottom: 3px dotted #d8b4fe;
+                        padding-bottom: 10px;
+                    }
+                    p {
+                        color: #4b5563;
+                        line-height: 1.8;
+                    }
+                `
+            },
+            custom: {
+                name: "Custom",
+                styles: ""
+            }
+        };
+        
+        // Current template
+        let selectedTemplate = 'professional';
+        
+        // Template selection
+        templateItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // Remove active class from all items
+                templateItems.forEach(i => i.classList.remove('active'));
+                
+                // Add active class to clicked item
+                item.classList.add('active');
+                
+                // Update current template
+                selectedTemplate = item.dataset.template;
+                currentTemplate.textContent = templates[selectedTemplate].name;
+                
+                // Update preview
+                updatePreview();
+            });
+        });
+        
+        // Preview sample selection
+        previewSamples.forEach(sample => {
+            sample.addEventListener('click', () => {
+                const template = sample.dataset.template;
+                
+                // Update template selection
+                templateItems.forEach(i => {
+                    i.classList.toggle('active', i.dataset.template === template);
+                });
+                
+                // Update current template
+                selectedTemplate = template;
+                currentTemplate.textContent = templates[selectedTemplate].name;
+                
+                // Update preview
+                updatePreview();
+            });
+        });
+        
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.dataset.tab;
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Show corresponding content
+                tabContents.forEach(content => {
+                    content.classList.toggle('active', content.id === `${tabId}-tab`);
+                });
+                
+                // If preview tab is selected, update preview
+                if (tabId === 'preview') {
+                    updatePreview();
+                }
+            });
+        });
+        
+        // Function to show message
+        function showMessage(message, type = 'success') {
+            messageBox.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            messageBox.className = `message-box show ${type}`;
+            
+            setTimeout(() => {
+                messageBox.className = 'message-box';
+            }, 3000);
+        }
+        
+        // Function to generate the HTML content
+        function generateHTML() {
+            const htmlContentFromEditor = quill.root.innerHTML;
+            let docTitle = docTitleInput.value.trim() || 'Generated HTML Document';
+            let fileName = fileNameInput.value.trim() || 'my-document.html';
+            const headerText = headerInput.value.trim();
+            const footerText = footerInput.value.trim();
+            const includeHeaderFooter = headerFooterToggle.checked;
+            const isResponsive = responsiveToggle.checked;
+            
+            // Ensure the file name has the .html extension
+            if (!fileName.toLowerCase().endsWith('.html')) {
+                fileName += '.html';
+            }
+            
+            // Get template styles
+            let templateStyles = templates[selectedTemplate].styles;
+            let customStyles = customCSS.value;
+            
+            // If custom template is selected, use only custom CSS
+            if (selectedTemplate === 'custom') {
+                templateStyles = customStyles;
+            } else {
+                // Combine template styles with custom CSS
+                templateStyles += '\n' + customStyles;
+            }
+            
+            // Create header and footer if enabled
+            const headerHtml = includeHeaderFooter && headerText ? 
+                `<header><h1>${headerText}</h1></header>` : '';
+                
+            const footerHtml = includeHeaderFooter && footerText ? 
+                `<footer><p>${footerText}</p></footer>` : '';
+            
+            // Responsive meta tag
+            const responsiveMeta = isResponsive ? 
+                '<meta name="viewport" content="width=device-width, initial-scale=1.0">' : '';
+            
+            // Construct the complete HTML document
+            const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    ${responsiveMeta}
+    <title>${docTitle}</title>
+    <style>
+        ${templateStyles}
+        
+        ${isResponsive ? `
+        @media (max-width: 768px) {
+            .content-container {
+                margin: 20px;
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+        ` : ''}
+    </style>
+</head>
+<body>
+    ${headerHtml}
+    <div class="content-container">
+        ${htmlContentFromEditor}
+    </div>
+    ${footerHtml}
+</body>
+</html>
+            `;
+            
+            return { htmlContent, fileName };
+        }
+        
+        // Function to update iframe preview
+        function updatePreview() {
+            const { htmlContent } = generateHTML();
+            const previewDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            previewDoc.open();
+            previewDoc.write(htmlContent);
+            previewDoc.close();
+        }
+        
+        // Initialize preview
+        updatePreview();
+        
+        // Event listeners for inputs to update preview
+        const updateInputs = [docTitleInput, fileNameInput, headerInput, footerInput, customCSS, headerFooterToggle, responsiveToggle];
+        updateInputs.forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+        
+        quill.on('text-change', updatePreview);
+        
+        // Download button
+        downloadBtn.addEventListener('click', () => {
+            const { htmlContent, fileName } = generateHTML();
+            
+            // Create a Blob object from the HTML string
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            
+            // Create a temporary URL for the Blob
+            const url = URL.createObjectURL(blob);
+            
+            // Create a temporary anchor element to trigger the download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            
+            // Programmatically click the anchor to start the download
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage(`"${fileName}" downloaded successfully!`);
+        });
+        
+        // Copy button
+        copyBtn.addEventListener('click', () => {
+            const { htmlContent } = generateHTML();
+            
+            navigator.clipboard.writeText(htmlContent).then(() => {
+                showMessage('HTML copied to clipboard!');
+            }).catch(err => {
+                showMessage('Failed to copy: ' + err, 'error');
+            });
+        });
+        
+        // Preview button
+        previewBtn.addEventListener('click', () => {
+            // Switch to preview tab
+            tabs.forEach(t => t.classList.remove('active'));
+            document.querySelector('.tab[data-tab="preview"]').classList.add('active');
+            
+            tabContents.forEach(content => {
+                content.classList.toggle('active', content.id === 'preview-tab');
+            });
+            
+            updatePreview();
+        });
+    </script>
+</body>
+</html>
