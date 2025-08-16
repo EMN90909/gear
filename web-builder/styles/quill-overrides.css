@@ -1,1 +1,19 @@
+.ql-toolbar {
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+  border: 1px solid var(--gray-300) !important;
+}
 
+.ql-container {
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+  border: 1px solid var(--gray-300) !important;
+  border-top: none !important;
+  height: 250px;
+  font-family: inherit;
+}
+
+.ql-editor {
+  font-size: 1rem;
+  line-height: 1.5;
+}
