@@ -9,8 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.snow.css" rel="stylesheet" />
-    <!-- template.css is no longer directly used for templates, but might contain other global styles.
-         If it only contained template-specific styles, you might consider removing or updating it. -->
+    <!-- template.css is still included; ensure it contains any global styles you need -->
     <link rel="stylesheet" href="template.css">
     <style>
         /* General body and container styles */
@@ -58,10 +57,59 @@
             line-height: 1.6;
         }
 
-        /* Removed modal specific styles, only keeping the ones related to overall page layout if any.
-           The hidden class remains for the custom CSS container toggle. */
+        /* Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+        .modal-close-btn:hover {
+            color: #1f2937;
+        }
         .hidden {
             display: none;
+        }
+        /* No longer needed: .template-card, .selected etc. for the template modal */
+        /* Template preview text styles might still be relevant if used elsewhere */
+        .template-preview-text {
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+        .template-preview-text.template-book { font-family: Georgia, serif; }
+        .template-preview-text.template-blog { font-family: 'Inter', sans-serif; font-weight: 500;}
+        .template-preview-text.template-minimal { font-family: 'Inter', sans-serif; font-weight: 400; letter-spacing: 0.02em; }
+
+        /* Animation for modal */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
@@ -87,17 +135,18 @@
                 </div>
                 <!-- Removed "Choose Template" button -->
             </div>
-            <div class="flex justify-center">
+            <!-- Custom CSS & JS buttons -->
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <button id="customCssBtn"
                     class="w-full sm:w-auto px-8 py-3 bg-gray-200 text-gray-800 font-semibold rounded-full shadow-lg
                     hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
                     Custom CSS
                 </button>
-            </div>
-            <div id="customCssContainer" class="mt-4 hidden">
-                <label for="customCssInput" class="block text-sm font-medium text-gray-700 mb-2">Add Your Custom CSS Here</label>
-                <textarea id="customCssInput" rows="6" placeholder="body { background-color: #fef3c7; }"
-                            class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <button id="customJsBtn"
+                    class="w-full sm:w-auto px-8 py-3 bg-gray-200 text-gray-800 font-semibold rounded-full shadow-lg
+                    hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
+                    Custom JavaScript
+                </button>
             </div>
         </div>
 
@@ -133,21 +182,50 @@
 
     <!-- Removed Interstitial and Template Selection Modals -->
 
+    <!-- NEW: Custom Code (CSS/JS) Modal -->
+    <div id="customCodeModal" class="hidden modal-overlay">
+        <div class="modal-content">
+            <h2 id="customCodeTitle" class="text-2xl font-bold mb-6 text-center text-gray-800">Edit Custom Code</h2>
+            <span id="closeCustomCodeModalBtn" class="modal-close-btn">&times;</span>
+            <textarea id="customCodeEditor" rows="15" placeholder="Enter your custom code here..."
+                        class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-y"></textarea>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="customCodeCancelBtn" class="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold transition-colors">
+                    Cancel
+                </button>
+                <button id="customCodeSaveBtn" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-colors">
+                    Save Code
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.js"></script>
     <script>
         // Get references to HTML elements
         const pageTitleInput = document.getElementById('pageTitleInput');
         const fileNameInput = document.getElementById('fileNameInput');
         const customCssBtn = document.getElementById('customCssBtn');
-        const customCssContainer = document.getElementById('customCssContainer');
-        const customCssInput = document.getElementById('customCssInput');
+        const customJsBtn = document.getElementById('customJsBtn'); // NEW: JS Button
         const copyBtn = document.getElementById('copyBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const messageBox = document.getElementById('messageBox');
         const previewFrame = document.getElementById('preview-frame');
         
-        // Removed template-related elements references
+        // NEW: Custom Code Modal Elements
+        const customCodeModal = document.getElementById('customCodeModal');
+        const customCodeTitle = document.getElementById('customCodeTitle');
+        const customCodeEditor = document.getElementById('customCodeEditor');
+        const customCodeSaveBtn = document.getElementById('customCodeSaveBtn');
+        const customCodeCancelBtn = document.getElementById('customCodeCancelBtn');
+        const closeCustomCodeModalBtn = document.getElementById('closeCustomCodeModalBtn');
         
+        // Global variables for custom CSS and JS, initialized from local storage
+        let customCss = localStorage.getItem('htmlGeneratorCustomCss') || '';
+        let customJs = localStorage.getItem('htmlGeneratorCustomJs') || '';
+        let currentModalMode = ''; // To track whether we're editing 'css' or 'js'
+
         // Configuration for Quill.js toolbar
         const toolbarOptions = [
             ['bold', 'italic', 'underline', 'strike'],
@@ -180,7 +258,8 @@
             const editorHtml = quill.root.innerHTML;
             const doc = previewFrame.contentWindow.document;
             const title = pageTitleInput.value || 'Untitled Document';
-            const customCss = customCssInput.value;
+            // customCss is now a global variable
+            // customJs is now a global variable
 
             doc.open();
             doc.write(`
@@ -215,6 +294,10 @@
                     <div class="main-content">
                         ${editorHtml}
                     </div>
+                    <script>
+                        // Custom JavaScript added by the user
+                        ${customJs}
+                    </script>
                 </body>
                 </html>
             `);
@@ -228,7 +311,8 @@
         function generateFullHtml() {
             const editorHtml = quill.root.innerHTML;
             const title = pageTitleInput.value || 'Untitled Document';
-            const customCss = customCssInput.value;
+            // customCss is now a global variable
+            // customJs is now a global variable
 
             return `<!DOCTYPE html>
 <html lang="en">
@@ -262,6 +346,10 @@
     <div class="main-content">
         ${editorHtml}
     </div>
+    <script>
+        // Custom JavaScript added by the user
+        ${customJs}
+    </script>
 </body>
 </html>`;
         }
@@ -273,6 +361,7 @@
          */
         function showMessage(message, color) {
             messageBox.textContent = message;
+            // Clear previous color classes before adding new one
             messageBox.className = `text-center font-medium text-sm transition-opacity duration-300 ${color}`;
             // Make the message visible and then fade it out after a delay
             setTimeout(() => {
@@ -283,12 +372,58 @@
             }, 100);
         }
 
-        // Removed all modal-related event listeners
+        // --- Event Listeners for Custom Code Modal ---
 
-        // Add event listener to toggle the custom CSS input
+        // Open Custom CSS Modal
         customCssBtn.addEventListener('click', () => {
-            customCssContainer.classList.toggle('hidden');
+            currentModalMode = 'css';
+            customCodeTitle.textContent = 'Edit Custom CSS';
+            customCodeEditor.value = customCss;
+            customCodeModal.classList.remove('hidden');
+            customCodeEditor.focus();
         });
+
+        // Open Custom JavaScript Modal
+        customJsBtn.addEventListener('click', () => {
+            currentModalMode = 'js';
+            customCodeTitle.textContent = 'Edit Custom JavaScript';
+            customCodeEditor.value = customJs;
+            customCodeModal.classList.remove('hidden');
+            customCodeEditor.focus();
+        });
+
+        // Save Custom Code
+        customCodeSaveBtn.addEventListener('click', () => {
+            if (currentModalMode === 'css') {
+                customCss = customCodeEditor.value;
+                localStorage.setItem('htmlGeneratorCustomCss', customCss);
+                showMessage('Custom CSS saved!', 'text-blue-500');
+            } else if (currentModalMode === 'js') {
+                customJs = customCodeEditor.value;
+                localStorage.setItem('htmlGeneratorCustomJs', customJs);
+                showMessage('Custom JavaScript saved!', 'text-blue-500');
+            }
+            customCodeModal.classList.add('hidden');
+            updateLivePreview(); // Re-render preview with new custom code
+        });
+
+        // Cancel Custom Code Editing
+        customCodeCancelBtn.addEventListener('click', () => {
+            customCodeModal.classList.add('hidden');
+        });
+
+        // Close Custom Code Modal with X button
+        closeCustomCodeModalBtn.addEventListener('click', () => {
+            customCodeModal.classList.add('hidden');
+        });
+
+        // Close Custom Code Modal when clicking outside
+        customCodeModal.addEventListener('click', (e) => {
+            if (e.target === customCodeModal) {
+                customCodeModal.classList.add('hidden');
+            }
+        });
+
 
         // Add event listener for the Copy button
         copyBtn.addEventListener('click', () => {
@@ -326,9 +461,8 @@
         pageTitleInput.addEventListener('input', () => {
             updateLivePreview();
         });
-        customCssInput.addEventListener('input', () => {
-            updateLivePreview();
-        });
+        // Now customCssInput is the textarea inside the modal, so its 'input' event won't trigger live update directly
+        // The update happens when the custom code modal is saved.
 
         // Initial preview update on page load
         window.onload = () => {
