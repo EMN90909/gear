@@ -11,6 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.snow.css" rel="stylesheet" />
     <link rel="stylesheet" href="template.css">
     <style>
+        /* General body and container styles */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f0f4f8; /* A soft, calming background color */
@@ -20,6 +21,8 @@
             max-width: 1200px;
             margin: 0 auto;
         }
+
+        /* Editor and Preview specific styles */
         #editor-container {
             height: 450px;
             background-color: white;
@@ -35,6 +38,8 @@
             background-color: white;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
+
+        /* Quill editor styles */
         .ql-toolbar.ql-snow {
             border-top-left-radius: 0.75rem;
             border-top-right-radius: 0.75rem;
@@ -49,6 +54,75 @@
         .ql-editor {
             font-size: 1rem;
             line-height: 1.6;
+        }
+
+        /* Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+        .modal-close-btn:hover {
+            color: #1f2937;
+        }
+        .hidden {
+            display: none;
+        }
+        .template-card {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            background-color: #f9fafb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .template-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+            border-color: #60a5fa; /* blue-400 */
+        }
+        .template-card.selected {
+            border-color: #3b82f6; /* blue-500 */
+            background-color: #eff6ff; /* blue-50 */
+            box-shadow: 0 0 0 3px #bfdbfe; /* blue-200 ring */
+        }
+        .template-preview-text {
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+        .template-preview-text.template-book { font-family: Georgia, serif; }
+        .template-preview-text.template-blog { font-family: 'Inter', sans-serif; font-weight: 500;}
+        .template-preview-text.template-minimal { font-family: 'Inter', sans-serif; font-weight: 400; letter-spacing: 0.02em; }
+
+        /* Animation for modal */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
@@ -122,6 +196,30 @@
         <div id="messageBox" class="text-center font-medium text-sm transition-opacity duration-300 opacity-0"></div>
     </div>
 
+    <!-- Interstitial Ad/Message Modal -->
+    <div id="interstitialModal" class="hidden modal-overlay">
+        <div class="modal-content text-center max-w-lg">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Heads Up!</h2>
+            <p class="text-lg text-gray-600 mb-6">
+                Choosing a new template will replace your current content in the editor.
+                Make sure to copy or download your work if you want to save it!
+            </p>
+            <div class="flex justify-center space-x-4">
+                <button id="interstitialCancelBtn"
+                    class="px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-full shadow-md
+                    hover:bg-gray-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
+                    Cancel
+                </button>
+                <button id="interstitialProceedBtn"
+                    class="px-6 py-3 bg-blue-500 text-white font-semibold rounded-full shadow-lg
+                    hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+                    Proceed to Templates
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Selection Modal (Existing) -->
     <div id="templateModal" class="hidden modal-overlay">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-6 text-center">Select a Template</h2>
@@ -171,9 +269,16 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const messageBox = document.getElementById('messageBox');
         const previewFrame = document.getElementById('preview-frame');
+        
+        // Template Selection Modal Elements
         const templateModal = document.getElementById('templateModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
         const templateCards = document.querySelectorAll('.template-card');
+
+        // NEW: Interstitial Modal Elements
+        const interstitialModal = document.getElementById('interstitialModal');
+        const interstitialCancelBtn = document.getElementById('interstitialCancelBtn');
+        const interstitialProceedBtn = document.getElementById('interstitialProceedBtn');
         
         let currentTemplate = 'book'; // Default template
 
@@ -276,18 +381,43 @@
             }, 100);
         }
 
-        // Add event listeners for the modal
+        // --- Event Listeners for Modals ---
+
+        // Show Interstitial Modal
         chooseTemplateBtn.addEventListener('click', () => {
-            templateModal.classList.remove('hidden');
+            interstitialModal.classList.remove('hidden');
         });
+
+        // Handle Interstitial Modal's Cancel/Close
+        interstitialCancelBtn.addEventListener('click', () => {
+            interstitialModal.classList.add('hidden');
+        });
+
+        // Handle Interstitial Modal's Proceed
+        interstitialProceedBtn.addEventListener('click', () => {
+            interstitialModal.classList.add('hidden'); // Hide interstitial
+            templateModal.classList.remove('hidden');   // Show template selection modal
+        });
+
+        // Close Template Selection Modal
         closeModalBtn.addEventListener('click', () => {
             templateModal.classList.add('hidden');
         });
+
+        // Close Template Selection Modal when clicking outside
         templateModal.addEventListener('click', (e) => {
             if (e.target === templateModal) {
                 templateModal.classList.add('hidden');
             }
         });
+
+        // Close Interstitial Modal when clicking outside
+        interstitialModal.addEventListener('click', (e) => {
+            if (e.target === interstitialModal) {
+                interstitialModal.classList.add('hidden');
+            }
+        });
+
 
         // Add click listeners to template cards
         templateCards.forEach(card => {
@@ -299,7 +429,7 @@
                 
                 currentTemplate = card.dataset.template;
                 updateLivePreview();
-                templateModal.classList.add('hidden');
+                templateModal.classList.add('hidden'); // Close template modal after selection
             });
         });
 
