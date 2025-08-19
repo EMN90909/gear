@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.snow.css" rel="stylesheet" />
-    <!-- template.css is still included; ensure it contains any global styles you need -->
     <link rel="stylesheet" href="template.css">
     <style>
         /* General body and container styles */
@@ -96,8 +95,22 @@
         .hidden {
             display: none;
         }
-        /* No longer needed: .template-card, .selected etc. for the template modal */
-        /* Template preview text styles might still be relevant if used elsewhere */
+        .template-card {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            background-color: #f9fafb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .template-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+            border-color: #60a5fa; /* blue-400 */
+        }
+        .template-card.selected {
+            border-color: #3b82f6; /* blue-500 */
+            background-color: #eff6ff; /* blue-50 */
+            box-shadow: 0 0 0 3px #bfdbfe; /* blue-200 ring */
+        }
         .template-preview-text {
             font-size: 0.9rem;
             color: #4b5563;
@@ -118,35 +131,38 @@
     <div class="container bg-white p-8 rounded-2xl shadow-2xl space-y-8">
         <h1 class="text-4xl font-bold text-center text-gray-800">HTML Content Generator</h1>
         <p class="text-center text-gray-500 max-w-2xl mx-auto">
-            Create and edit rich text on the left. See a live preview on the right.
+            Create and edit rich text on the left. Choose a template and see a live preview on the right.
         </p>
 
         <div class="space-y-4">
             <div class="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 space-y-4 sm:space-y-0">
-                <div class="w-full sm:w-1/2">
+                <div class="w-full sm:w-1/3">
                     <label for="pageTitleInput" class="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
                     <input type="text" id="pageTitleInput" placeholder="My Web Page"
                         class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
-                <div class="w-full sm:w-1/2">
+                <div class="w-full sm:w-1/3">
                     <label for="fileNameInput" class="block text-sm font-medium text-gray-700 mb-2">File Name</label>
                     <input type="text" id="fileNameInput" placeholder="my-document"
                         class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
-                <!-- Removed "Choose Template" button -->
+                <button id="chooseTemplateBtn"
+                    class="w-full sm:w-1/3 px-8 py-3 bg-blue-500 text-white font-semibold rounded-full shadow-lg
+                    hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+                    Choose Template
+                </button>
             </div>
-            <!-- Custom CSS & JS buttons -->
-            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <div class="flex justify-center">
                 <button id="customCssBtn"
                     class="w-full sm:w-auto px-8 py-3 bg-gray-200 text-gray-800 font-semibold rounded-full shadow-lg
                     hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
                     Custom CSS
                 </button>
-                <button id="customJsBtn"
-                    class="w-full sm:w-auto px-8 py-3 bg-gray-200 text-gray-800 font-semibold rounded-full shadow-lg
-                    hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
-                    Custom JavaScript
-                </button>
+            </div>
+            <div id="customCssContainer" class="mt-4 hidden">
+                <label for="customCssInput" class="block text-sm font-medium text-gray-700 mb-2">Add Your Custom CSS Here</label>
+                <textarea id="customCssInput" rows="6" placeholder="body { background-color: #fef3c7; }"
+                            class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
             </div>
         </div>
 
@@ -180,26 +196,65 @@
         <div id="messageBox" class="text-center font-medium text-sm transition-opacity duration-300 opacity-0"></div>
     </div>
 
-    <!-- Removed Interstitial and Template Selection Modals -->
-
-    <!-- NEW: Custom Code (CSS/JS) Modal -->
-    <div id="customCodeModal" class="hidden modal-overlay">
-        <div class="modal-content">
-            <h2 id="customCodeTitle" class="text-2xl font-bold mb-6 text-center text-gray-800">Edit Custom Code</h2>
-            <span id="closeCustomCodeModalBtn" class="modal-close-btn">&times;</span>
-            <textarea id="customCodeEditor" rows="15" placeholder="Enter your custom code here..."
-                        class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm resize-y"></textarea>
-            <div class="flex justify-end gap-4 mt-6">
-                <button id="customCodeCancelBtn" class="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold transition-colors">
+    <!-- Interstitial Ad/Message Modal -->
+    <div id="interstitialModal" class="hidden modal-overlay">
+        <div class="modal-content text-center max-w-lg">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Heads Up!</h2>
+            <p class="text-lg text-gray-600 mb-6">
+                Choosing a new template will replace your current content in the editor.
+                Make sure to copy or download your work if you want to save it!
+            </p>
+            <div class="flex justify-center space-x-4">
+                <button id="interstitialCancelBtn"
+                    class="px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-full shadow-md
+                    hover:bg-gray-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
                     Cancel
                 </button>
-                <button id="customCodeSaveBtn" class="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold transition-colors">
-                    Save Code
+                <button id="interstitialProceedBtn"
+                    class="px-6 py-3 bg-blue-500 text-white font-semibold rounded-full shadow-lg
+                    hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+                    Proceed to Templates
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- Template Selection Modal (Existing) -->
+    <div id="templateModal" class="hidden modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-center">Select a Template</h2>
+            <span id="closeModalBtn" class="modal-close-btn">&times;</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="template-card p-4 rounded-xl border border-gray-300 text-center" data-template="book">
+                    <h3 class="font-bold text-lg mb-2">Classic Book</h3>
+                    <p class="text-sm text-gray-600 mb-4">A traditional, serif-based style with a clean, scholarly feel.</p>
+                    <div class="w-full h-32 rounded-lg bg-white overflow-hidden shadow-inner flex items-center justify-center text-center">
+                        <p class="template-preview-text template-book">
+                            A classic look.
+                        </p>
+                    </div>
+                </div>
+                <div class="template-card p-4 rounded-xl border border-gray-300 text-center" data-template="blog">
+                    <h3 class="font-bold text-lg mb-2">Modern Blog Post</h3>
+                    <p class="text-sm text-gray-600 mb-4">A clean, sans-serif design for a contemporary online article.</p>
+                    <div class="w-full h-32 rounded-lg bg-white overflow-hidden shadow-inner flex items-center justify-center text-center">
+                        <p class="template-preview-text template-blog">
+                            A modern look.
+                        </p>
+                    </div>
+                </div>
+                <div class="template-card p-4 rounded-xl border border-gray-300 text-center" data-template="minimal">
+                    <h3 class="font-bold text-lg mb-2">Minimalist Document</h3>
+                    <p class="text-sm text-gray-600 mb-4">A stripped-back style focused on legibility and simplicity.</p>
+                    <div class="w-full h-32 rounded-lg bg-white overflow-hidden shadow-inner flex items-center justify-center text-center">
+                        <p class="template-preview-text template-minimal">
+                            A minimalist look.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.js"></script>
     <script>
@@ -207,24 +262,25 @@
         const pageTitleInput = document.getElementById('pageTitleInput');
         const fileNameInput = document.getElementById('fileNameInput');
         const customCssBtn = document.getElementById('customCssBtn');
-        const customJsBtn = document.getElementById('customJsBtn'); // NEW: JS Button
+        const customCssContainer = document.getElementById('customCssContainer');
+        const customCssInput = document.getElementById('customCssInput');
+        const chooseTemplateBtn = document.getElementById('chooseTemplateBtn');
         const copyBtn = document.getElementById('copyBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const messageBox = document.getElementById('messageBox');
         const previewFrame = document.getElementById('preview-frame');
         
-        // NEW: Custom Code Modal Elements
-        const customCodeModal = document.getElementById('customCodeModal');
-        const customCodeTitle = document.getElementById('customCodeTitle');
-        const customCodeEditor = document.getElementById('customCodeEditor');
-        const customCodeSaveBtn = document.getElementById('customCodeSaveBtn');
-        const customCodeCancelBtn = document.getElementById('customCodeCancelBtn');
-        const closeCustomCodeModalBtn = document.getElementById('closeCustomCodeModalBtn');
+        // Template Selection Modal Elements
+        const templateModal = document.getElementById('templateModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const templateCards = document.querySelectorAll('.template-card');
+
+        // NEW: Interstitial Modal Elements
+        const interstitialModal = document.getElementById('interstitialModal');
+        const interstitialCancelBtn = document.getElementById('interstitialCancelBtn');
+        const interstitialProceedBtn = document.getElementById('interstitialProceedBtn');
         
-        // Global variables for custom CSS and JS, initialized from local storage
-        let customCss = localStorage.getItem('htmlGeneratorCustomCss') || '';
-        let customJs = localStorage.getItem('htmlGeneratorCustomJs') || '';
-        let currentModalMode = ''; // To track whether we're editing 'css' or 'js'
+        let currentTemplate = 'book'; // Default template
 
         // Configuration for Quill.js toolbar
         const toolbarOptions = [
@@ -258,8 +314,7 @@
             const editorHtml = quill.root.innerHTML;
             const doc = previewFrame.contentWindow.document;
             const title = pageTitleInput.value || 'Untitled Document';
-            // customCss is now a global variable
-            // customJs is now a global variable
+            const customCss = customCssInput.value;
 
             doc.open();
             doc.write(`
@@ -268,36 +323,20 @@
                 <head>
                     <meta charset="UTF-8">
                     <title>${title}</title>
-                    <!-- Include Tailwind CSS CDN for the preview -->
-                    <script src="https://cdn.tailwindcss.com"></script>
-                    <!-- template.css might still contain useful global styles not specific to a "template" design -->
                     <link rel="stylesheet" href="template.css">
                     <style>
                         /* Custom CSS added by the user */
                         ${customCss}
-                        /* Added for 3cm horizontal gap for the entire page body */
+                        /* Added for 3cm horizontal gap */
                         body {
                             padding-left: 3cm;
                             padding-right: 3cm;
                             box-sizing: border-box; /* To ensure padding doesn't add to total width */
-                            /* Default background color for the content, if not set by Quill or custom CSS */
-                            background-color: white; 
-                        }
-                        /* Centering for the main content within the body */
-                        .main-content {
-                            max-width: 800px; /* Readable line length */
-                            margin: 0 auto; /* Center the block */
                         }
                     </style>
                 </head>
-                <body>
-                    <div class="main-content">
-                        ${editorHtml}
-                    </div>
-                    <script>
-                        // Custom JavaScript added by the user
-                        ${customJs}
-                    </script>
+                <body class="template-${currentTemplate}">
+                    ${editorHtml}
                 </body>
                 </html>
             `);
@@ -311,8 +350,7 @@
         function generateFullHtml() {
             const editorHtml = quill.root.innerHTML;
             const title = pageTitleInput.value || 'Untitled Document';
-            // customCss is now a global variable
-            // customJs is now a global variable
+            const customCss = customCssInput.value;
 
             return `<!DOCTYPE html>
 <html lang="en">
@@ -320,36 +358,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
-    <!-- Include Tailwind CSS CDN for the downloaded file -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- template.css might still contain useful global styles not specific to a "template" design -->
     <link rel="stylesheet" href="template.css">
     <style>
         /* Custom CSS added by the user */
         ${customCss}
-        /* Added for 3cm horizontal gap for the entire page body */
+        /* Added for 3cm horizontal gap */
         body {
             padding-left: 3cm;
             padding-right: 3cm;
             box-sizing: border-box; /* To ensure padding doesn't add to total width */
-            /* Default background color for the content, if not set by Quill or custom CSS */
-            background-color: white; 
-        }
-        /* Centering for the main content within the body */
-        .main-content {
-            max-width: 800px; /* Readable line length */
-            margin: 0 auto; /* Center the block */
         }
     </style>
 </head>
-<body>
-    <div class="main-content">
-        ${editorHtml}
-    </div>
-    <script>
-        // Custom JavaScript added by the user
-        ${customJs}
-    </script>
+<body class="template-${currentTemplate}">
+    ${editorHtml}
 </body>
 </html>`;
         }
@@ -361,7 +383,6 @@
          */
         function showMessage(message, color) {
             messageBox.textContent = message;
-            // Clear previous color classes before adding new one
             messageBox.className = `text-center font-medium text-sm transition-opacity duration-300 ${color}`;
             // Make the message visible and then fade it out after a delay
             setTimeout(() => {
@@ -372,58 +393,62 @@
             }, 100);
         }
 
-        // --- Event Listeners for Custom Code Modal ---
+        // --- Event Listeners for Modals ---
 
-        // Open Custom CSS Modal
+        // Show Interstitial Modal
+        chooseTemplateBtn.addEventListener('click', () => {
+            interstitialModal.classList.remove('hidden');
+        });
+
+        // Handle Interstitial Modal's Cancel/Close
+        interstitialCancelBtn.addEventListener('click', () => {
+            interstitialModal.classList.add('hidden');
+        });
+
+        // Handle Interstitial Modal's Proceed
+        interstitialProceedBtn.addEventListener('click', () => {
+            interstitialModal.classList.add('hidden'); // Hide interstitial
+            templateModal.classList.remove('hidden');   // Show template selection modal
+        });
+
+        // Close Template Selection Modal
+        closeModalBtn.addEventListener('click', () => {
+            templateModal.classList.add('hidden');
+        });
+
+        // Close Template Selection Modal when clicking outside
+        templateModal.addEventListener('click', (e) => {
+            if (e.target === templateModal) {
+                templateModal.classList.add('hidden');
+            }
+        });
+
+        // Close Interstitial Modal when clicking outside
+        interstitialModal.addEventListener('click', (e) => {
+            if (e.target === interstitialModal) {
+                interstitialModal.classList.add('hidden');
+            }
+        });
+
+
+        // Add click listeners to template cards
+        templateCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove selected class from all cards
+                templateCards.forEach(c => c.classList.remove('selected'));
+                // Add selected class to the clicked card
+                card.classList.add('selected');
+                
+                currentTemplate = card.dataset.template;
+                updateLivePreview();
+                templateModal.classList.add('hidden'); // Close template modal after selection
+            });
+        });
+
+        // Add event listener to toggle the custom CSS input
         customCssBtn.addEventListener('click', () => {
-            currentModalMode = 'css';
-            customCodeTitle.textContent = 'Edit Custom CSS';
-            customCodeEditor.value = customCss;
-            customCodeModal.classList.remove('hidden');
-            customCodeEditor.focus();
+            customCssContainer.classList.toggle('hidden');
         });
-
-        // Open Custom JavaScript Modal
-        customJsBtn.addEventListener('click', () => {
-            currentModalMode = 'js';
-            customCodeTitle.textContent = 'Edit Custom JavaScript';
-            customCodeEditor.value = customJs;
-            customCodeModal.classList.remove('hidden');
-            customCodeEditor.focus();
-        });
-
-        // Save Custom Code
-        customCodeSaveBtn.addEventListener('click', () => {
-            if (currentModalMode === 'css') {
-                customCss = customCodeEditor.value;
-                localStorage.setItem('htmlGeneratorCustomCss', customCss);
-                showMessage('Custom CSS saved!', 'text-blue-500');
-            } else if (currentModalMode === 'js') {
-                customJs = customCodeEditor.value;
-                localStorage.setItem('htmlGeneratorCustomJs', customJs);
-                showMessage('Custom JavaScript saved!', 'text-blue-500');
-            }
-            customCodeModal.classList.add('hidden');
-            updateLivePreview(); // Re-render preview with new custom code
-        });
-
-        // Cancel Custom Code Editing
-        customCodeCancelBtn.addEventListener('click', () => {
-            customCodeModal.classList.add('hidden');
-        });
-
-        // Close Custom Code Modal with X button
-        closeCustomCodeModalBtn.addEventListener('click', () => {
-            customCodeModal.classList.add('hidden');
-        });
-
-        // Close Custom Code Modal when clicking outside
-        customCodeModal.addEventListener('click', (e) => {
-            if (e.target === customCodeModal) {
-                customCodeModal.classList.add('hidden');
-            }
-        });
-
 
         // Add event listener for the Copy button
         copyBtn.addEventListener('click', () => {
@@ -461,13 +486,14 @@
         pageTitleInput.addEventListener('input', () => {
             updateLivePreview();
         });
-        // Now customCssInput is the textarea inside the modal, so its 'input' event won't trigger live update directly
-        // The update happens when the custom code modal is saved.
+        customCssInput.addEventListener('input', () => {
+            updateLivePreview();
+        });
 
         // Initial preview update on page load
         window.onload = () => {
-            // Start with a blank editor (or a default message)
-            quill.setContents([{ insert: 'Start typing your content here...' }]); 
+            // Set the default selected card
+            document.querySelector(`[data-template="book"]`).classList.add('selected');
             updateLivePreview();
         };
     </script>
