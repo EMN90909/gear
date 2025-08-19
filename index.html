@@ -3,833 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>emn tools - Live HTML Editor</title>
-    <!-- Tailwind CSS CDN for styling -->
+    <title>HTML Content Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.snow.css" rel="stylesheet" />
+    <link rel="stylesheet" href="template.css">
     <style>
-        /* Custom styles for the resizer cursor */
-        .cursor-ew-resize {
-            cursor: ew-resize;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* A soft, calming background color */
+            padding: 2rem;
         }
-        /* Hide the modal elements by default */
-        .hidden-modal {
-            display: none;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #editor-container {
+            height: 450px;
+            background-color: white;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        #preview-frame {
+            border: none;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.75rem;
+            background-color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .ql-toolbar.ql-snow {
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+            background-color: #f9fafb;
+            border-color: #e5e7eb;
+        }
+        .ql-container.ql-snow {
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+            border-color: #e5e7eb;
+        }
+        .ql-editor {
+            font-size: 1rem;
+            line-height: 1.6;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+<body class="p-4">
 
-    <!-- Message Box -->
-    <div id="message-box-container" class="fixed top-4 left-1/2 -translate-x-1/2 p-3 rounded-lg text-center font-bold transition-opacity duration-300 z-50 hidden-modal">
-        <span id="message-text"></span>
-    </div>
+    <div class="container bg-white p-8 rounded-2xl shadow-2xl space-y-8">
+        <h1 class="text-4xl font-bold text-center text-gray-800">HTML Content Generator</h1>
+        <p class="text-center text-gray-500 max-w-2xl mx-auto">
+            Create and edit rich text on the left. Choose a template and see a live preview on the right.
+        </p>
 
-    <!-- "Add File" Modal -->
-    <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden-modal">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-sm">
-            <h2 class="text-xl font-bold mb-4">Create New File</h2>
-            <input type="text" id="new-file-name-input" placeholder="e.g., about.html or script.js"
-                   class="w-full p-3 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500" />
-            <div class="flex justify-end gap-4 mt-6">
-                <button id="add-modal-cancel" class="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 transition-colors">
-                    Cancel
-                </button>
-                <button id="add-modal-create" class="px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-600 transition-colors">
-                    Create
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- "Delete File" Modal -->
-    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden-modal">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-sm">
-            <h2 class="text-xl font-bold mb-4">Confirm Deletion</h2>
-            <p class="mb-6">Are you sure you want to delete <span id="file-to-delete-name" class="font-bold text-red-400"></span>?</p>
-            <div class="flex justify-end gap-4 mt-6">
-                <button id="delete-modal-cancel" class="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 transition-colors">
-                    Cancel
-                </button>
-                <button id="delete-modal-delete" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 transition-colors">
-                    Delete
+        <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 space-y-4 sm:space-y-0">
+                <div class="w-full sm:w-1/3">
+                    <label for="pageTitleInput" class="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
+                    <input type="text" id="pageTitleInput" placeholder="My Web Page"
+                        class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="w-full sm:w-1/3">
+                    <label for="fileNameInput" class="block text-sm font-medium text-gray-700 mb-2">File Name</label>
+                    <input type="text" id="fileNameInput" placeholder="my-document"
+                        class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <button id="chooseTemplateBtn"
+                    class="w-full sm:w-1/3 px-8 py-3 bg-blue-500 text-white font-semibold rounded-full shadow-lg
+                    hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+                    Choose Template
                 </button>
             </div>
-        </div>
-    </div>
-
-    <!-- "Rename File" Modal -->
-    <div id="rename-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden-modal">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-sm">
-            <h2 class="text-xl font-bold mb-4">Rename File</h2>
-            <p class="mb-4">Renaming <span id="file-to-rename-name" class="font-bold text-teal-400"></span></p>
-            <input type="text" id="new-file-name-for-rename-input" placeholder="Enter new file name"
-                   class="w-full p-3 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500" />
-            <div class="flex justify-end gap-4 mt-6">
-                <button id="rename-modal-cancel" class="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 transition-colors">
-                    Cancel
-                </button>
-                <button id="rename-modal-rename" class="px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-600 transition-colors">
-                    Rename
+            <div class="flex justify-center">
+                <button id="customCssBtn"
+                    class="w-full sm:w-auto px-8 py-3 bg-gray-200 text-gray-800 font-semibold rounded-full shadow-lg
+                    hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
+                    Custom CSS
                 </button>
             </div>
-        </div>
-    </div>
-
-    <!-- Right-click Context Menu -->
-    <div id="context-menu" class="fixed z-50 bg-gray-800 rounded-lg shadow-xl py-2 hidden-modal">
-        <ul class="list-none m-0 p-0">
-            <li id="context-rename" class="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm">Rename</li>
-            <li id="context-delete" class="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm text-red-400">Delete</li>
-            <li id="context-hide" class="px-4 py-2 hover:bg-gray-700 cursor-pointer text-sm">Hide</li>
-        </ul>
-    </div>
-      
-    <!-- File Menu (modal overlay) -->
-    <div id="file-menu" class="fixed left-0 top-0 bottom-0 bg-gray-800 w-64 p-4 z-40 transition-transform duration-300 ease-in-out transform shadow-2xl hidden-modal">
-        <h2 class="text-xl font-bold mb-4 text-teal-400">Files</h2>
-        <div id="file-list-container" class="flex-grow overflow-y-auto">
-            <!-- File list will be rendered here by JavaScript -->
-        </div>
-        <div class="mt-4 flex flex-col gap-2">
-            <button id="download-project-btn" class="flex items-center justify-center p-2 rounded-lg border-2 border-solid border-teal-500 text-white hover:bg-teal-600 transition-colors">
-                <span id="download-spinner" class="animate-spin h-5 w-5 mr-2 text-white hidden">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </span>
-                <svg id="download-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span id="download-text">Download Project (ZIP)</span>
-            </button>
-            <button id="add-file-btn" class="flex items-center justify-center p-2 rounded-lg border-2 border-dashed border-gray-600 text-gray-400 hover:text-white hover:border-teal-500 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                Add File
-            </button>
-            <label for="upload-input" class="cursor-pointer flex items-center justify-center p-2 rounded-lg border-2 border-dashed border-gray-600 text-gray-400 hover:text-white hover:border-teal-500 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Upload File
-            </label>
-            <input type="file" id="upload-input" class="hidden" />
-        </div>
-    </div>
-
-    <!-- Header -->
-    <div class="flex justify-between items-center p-4 bg-gray-900 shadow-md">
-        <button id="toggle-file-menu-btn" class="p-2 rounded-md hover:bg-gray-800 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-        </button>
-        <h1 class="text-2xl md:text-3xl font-extrabold text-teal-400 text-center">
-            emn tools
-        </h1>
-        <div class="w-12"></div> <!-- Spacer to center the title -->
-    </div>
-
-    <!-- Main 2-Column Layout with Resizer -->
-    <div class="flex flex-grow w-full overflow-hidden">
-        
-        <!-- Code Editor Panel -->
-        <div id="editor-panel" class="flex flex-col p-4 overflow-hidden" style="width: 50%;">
-            <label for="editor" class="text-lg font-semibold mb-2 text-gray-300" id="active-file-label">index.html</label>
-            <textarea id="editor" spellcheck="false"
-                      class="flex-1 p-4 rounded-lg bg-gray-800 text-gray-100 border-2 border-gray-700
-                             focus:outline-none focus:border-teal-400 transition-colors duration-200
-                             font-mono text-sm shadow-lg resize-none"></textarea>
+            <div id="customCssContainer" class="mt-4 hidden">
+                <label for="customCssInput" class="block text-sm font-medium text-gray-700 mb-2">Add Your Custom CSS Here</label>
+                <textarea id="customCssInput" rows="6" placeholder="body { background-color: #fef3c7; }"
+                            class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
         </div>
 
-        <!-- Resizer Handle -->
-        <div id="resizer" class="w-2 cursor-ew-resize bg-gray-700 hover:bg-teal-500 transition-colors duration-200"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-4">
+                <label for="editor-container" class="block text-sm font-medium text-gray-700">Rich Text Editor</label>
+                <div id="editor-container"></div>
+            </div>
 
-        <!-- Live Preview Panel -->
-        <div id="preview-panel" class="flex flex-col p-4 flex-grow overflow-hidden" style="width: 50%;">
-            <div class="flex justify-between items-center mb-2">
-                <label for="preview" class="text-lg font-semibold text-gray-300">Live Preview</label>
-                <div class="flex space-x-2">
-                    <button id="mobile-view-btn" class="px-3 py-1 rounded-full text-sm font-semibold transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600" title="Mobile View">Mobile</button>
-                    <button id="web-view-btn" class="px-3 py-1 rounded-full text-sm font-semibold transition-colors bg-teal-500 text-white" title="Web View">Web</button>
+            <div class="space-y-4">
+                <label for="preview-frame" class="block text-sm font-medium text-gray-700">Live Preview</label>
+                <div class="p-4 rounded-xl shadow-lg border border-gray-300 overflow-hidden" style="height: 450px;">
+                    <iframe id="preview-frame"></iframe>
                 </div>
             </div>
-            <div id="iframe-wrapper" class="relative flex-1">
-                <iframe id="preview" class="rounded-lg border-2 border-gray-700 bg-white shadow-lg transition-all duration-300 w-full h-full" title="HTML Live Preview"></iframe>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <button id="copyBtn"
+                    class="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-full shadow-lg
+                    hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                Copy HTML
+            </button>
+            <button id="downloadBtn"
+                    class="w-full sm:w-auto px-8 py-4 bg-green-600 text-white text-lg font-semibold rounded-full shadow-lg
+                    hover:bg-green-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                Download HTML
+            </button>
+        </div>
+
+        <div id="messageBox" class="text-center font-medium text-sm transition-opacity duration-300 opacity-0"></div>
+    </div>
+
+    <div id="templateModal" class="hidden modal-overlay">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-center">Select a Template</h2>
+            <span id="closeModalBtn" class="modal-close-btn">&times;</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="template-card p-4 rounded-xl border border-gray-300 text-center" data-template="book">
+                    <h3 class="font-bold text-lg mb-2">Classic Book</h3>
+                    <p class="text-sm text-gray-600 mb-4">A traditional, serif-based style with a clean, scholarly feel.</p>
+                    <div class="w-full h-32 rounded-lg bg-white overflow-hidden shadow-inner flex items-center justify-center text-center">
+                        <p class="template-preview-text template-book">
+                            A classic look.
+                        </p>
+                    </div>
+                </div>
+                <div class="template-card p-4 rounded-xl border border-gray-300 text-center" data-template="blog">
+                    <h3 class="font-bold text-lg mb-2">Modern Blog Post</h3>
+                    <p class="text-sm text-gray-600 mb-4">A clean, sans-serif design for a contemporary online article.</p>
+                    <div class="w-full h-32 rounded-lg bg-white overflow-hidden shadow-inner flex items-center justify-center text-center">
+                        <p class="template-preview-text template-blog">
+                            A modern look.
+                        </p>
+                    </div>
+                </div>
+                <div class="template-card p-4 rounded-xl border border-gray-300 text-center" data-template="minimal">
+                    <h3 class="font-bold text-lg mb-2">Minimalist Document</h3>
+                    <p class="text-sm text-gray-600 mb-4">A stripped-back style focused on legibility and simplicity.</p>
+                    <div class="w-full h-32 rounded-lg bg-white overflow-hidden shadow-inner flex items-center justify-center text-center">
+                        <p class="template-preview-text template-minimal">
+                            A minimalist look.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.js"></script>
     <script>
-        // --- Global State Variables (replacing React's useState) ---
-        let files = {
-            'index.html': `<!DOCTYPE html>
+        // Get references to HTML elements
+        const pageTitleInput = document.getElementById('pageTitleInput');
+        const fileNameInput = document.getElementById('fileNameInput');
+        const customCssBtn = document.getElementById('customCssBtn');
+        const customCssContainer = document.getElementById('customCssContainer');
+        const customCssInput = document.getElementById('customCssInput');
+        const chooseTemplateBtn = document.getElementById('chooseTemplateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const messageBox = document.getElementById('messageBox');
+        const previewFrame = document.getElementById('preview-frame');
+        const templateModal = document.getElementById('templateModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const templateCards = document.querySelectorAll('.template-card');
+        
+        let currentTemplate = 'book'; // Default template
+
+        // Configuration for Quill.js toolbar
+        const toolbarOptions = [
+            ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote', 'code-block'],
+            [{ 'header': 1 }, { 'header': 2 }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'script': 'sub'}, { 'script': 'super' }],
+            [{ 'indent': '-1'}, { 'indent': '+1' }],
+            [{ 'direction': 'rtl' }],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
+            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'font': [] }],
+            [{ 'align': [] }],
+            ['clean']
+        ];
+
+        // Initialize Quill editor on the editor-container div
+        const quill = new Quill('#editor-container', {
+            theme: 'snow',
+            modules: {
+                toolbar: toolbarOptions
+            }
+        });
+
+        /**
+         * Updates the content of the live preview iframe with the current HTML and selected template.
+         */
+        function updateLivePreview() {
+            const editorHtml = quill.root.innerHTML;
+            const doc = previewFrame.contentWindow.document;
+            const title = pageTitleInput.value || 'Untitled Document';
+            const customCss = customCssInput.value;
+
+            doc.open();
+            doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${title}</title>
+                    <link rel="stylesheet" href="template.css">
+                    <style>
+                        /* Custom CSS added by the user */
+                        ${customCss}
+                    </style>
+                </head>
+                <body class="template-${currentTemplate}">
+                    ${editorHtml}
+                </body>
+                </html>
+            `);
+            doc.close();
+        }
+
+        /**
+         * Generates the complete, self-contained HTML file content.
+         * @returns {string} The full HTML content.
+         */
+        function generateFullHtml() {
+            const editorHtml = quill.root.innerHTML;
+            const title = pageTitleInput.value || 'Untitled Document';
+            const customCss = customCssInput.value;
+
+            return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Awesome Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>${title}</title>
+    <link rel="stylesheet" href="template.css">
+    <style>
+        /* Custom CSS added by the user */
+        ${customCss}
+    </style>
 </head>
-<body>
-    <h1>Welcome to the Live HTML Editor!</h1>
-    <p>
-        Edit the code in the different tabs above and see the changes live here.
-        This editor supports HTML, CSS, and JavaScript.
-    </p>
-    <button id="my-button">Click Me!</button>
-    <script src="script.js"></script>
-    <div id="message-box"></div>
+<body class="template-${currentTemplate}">
+    ${editorHtml}
 </body>
-</html>`,
-            'styles.css': `body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f0fdf4;
-    color: #166534;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    text-align: center;
-    padding: 2rem;
-}
-h1 {
-    color: #065f46;
-    font-weight: 700;
-    margin-bottom: 1rem;
-}
-p {
-    max-width: 600px;
-    line-height: 1.5;
-}
-#my-button {
-    background-color: #22c55e;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    margin-top: 1rem;
-    transition: background-color 0.3s ease;
-}
-#my-button:hover {
-    background-color: #16a34a;
-}`,
-            'script.js': `document.getElementById('my-button').addEventListener('click', () => {
-    // We'll use a custom message box as alert() is not supported in this environment.
-    const messageBox = document.getElementById('message-box');
-    if (messageBox) {
-        messageBox.textContent = 'Button clicked!';
-        messageBox.className = 'absolute top-4 left-1/2 -translate-x-1/2 p-3 rounded-lg text-center font-bold bg-green-900 text-green-300 transition-opacity duration-300';
-        messageBox.style.opacity = 1;
-        setTimeout(() => {
-            messageBox.style.opacity = 0;
-        }, 3000);
-    }
-});`
-        };
-        let activeFile = 'index.html';
-        let currentMessage = { text: '', type: '' }; // Renamed to avoid conflict with showMessage function
+</html>`;
+        }
         
-        let showAddModal = false;
-        let newFileNameInput = '';
-        let showDeleteModal = false;
-        let fileToDelete = null;
-        let showRenameModal = false;
-        let fileToRename = null;
-        let newFileNameForRename = '';
-        
-        let contextMenu = { visible: false, x: 0, y: 0, fileName: null };
-        let hiddenFiles = [];
-        const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3 MB in bytes
-        let showFileMenu = false;
-        let editorWidth = 50; // Initial percentage
-        let previewMode = 'web';
-        let isDownloading = false;
-
-        // --- DOM Elements Cache ---
-        const messageBoxContainer = document.getElementById('message-box-container');
-        const messageText = document.getElementById('message-text');
-        const addModal = document.getElementById('add-modal');
-        const newFileNameInputField = document.getElementById('new-file-name-input');
-        const deleteModal = document.getElementById('delete-modal');
-        const fileToDeleteNameSpan = document.getElementById('file-to-delete-name');
-        const renameModal = document.getElementById('rename-modal');
-        const fileToRenameNameSpan = document.getElementById('file-to-rename-name');
-        const newFileNameForRenameInputField = document.getElementById('new-file-name-for-rename-input');
-        const contextMenuElement = document.getElementById('context-menu');
-        const fileMenuElement = document.getElementById('file-menu');
-        const fileListContainer = document.getElementById('file-list-container');
-        const editorPanel = document.getElementById('editor-panel');
-        const editorTextarea = document.getElementById('editor');
-        const activeFileLabel = document.getElementById('active-file-label');
-        const resizerElement = document.getElementById('resizer');
-        const previewPanel = document.getElementById('preview-panel');
-        const previewIframe = document.getElementById('preview');
-        const iframeWrapper = document.getElementById('iframe-wrapper');
-        const mobileViewBtn = document.getElementById('mobile-view-btn');
-        const webViewBtn = document.getElementById('web-view-btn');
-        const downloadProjectBtn = document.getElementById('download-project-btn');
-        const downloadSpinner = document.getElementById('download-spinner');
-        const downloadIcon = document.getElementById('download-icon');
-        const downloadText = document.getElementById('download-text');
-
-        // --- Utility Functions ---
-
         /**
-         * Sets a global state variable and re-renders the relevant UI part.
-         * This mimics React's `setState`.
-         * @param {string} key - The name of the global state variable.
-         * @param {*} value - The new value for the state variable.
-         * @param {function} [callback] - An optional callback to run after state update and render.
+         * Displays a temporary message in the message box.
+         * @param {string} message The message to display.
+         * @param {string} color The Tailwind CSS color class (e.g., 'text-green-500').
          */
-        function setState(key, value, callback) {
-            // Simple shallow comparison for objects to avoid unnecessary re-renders
-            if (typeof value === 'object' && value !== null && typeof window[key] === 'object' && window[key] !== null) {
-                const areEqual = Object.keys(value).length === Object.keys(window[key]).length &&
-                                Object.keys(value).every(prop => value[prop] === window[key][prop]);
-                if (areEqual) return;
-            } else if (window[key] === value) {
-                return; // Value hasn't changed
-            }
-
-            window[key] = value;
-            renderUI(key); // Call a general render function that knows what to update
-
-            if (callback) {
-                callback();
-            }
-        }
-
-        /**
-         * Orchestrates UI rendering based on which state changed.
-         * @param {string} changedStateKey - The key of the state variable that changed.
-         */
-        function renderUI(changedStateKey) {
-            switch (changedStateKey) {
-                case 'files':
-                    saveFilesToLocalStorage();
-                    renderFileList();
-                    updatePreview();
-                    editorTextarea.value = files[activeFile]; // Update editor content directly
-                    break;
-                case 'activeFile':
-                    activeFileLabel.textContent = activeFile;
-                    editorTextarea.value = files[activeFile];
-                    renderFileList(); // To update active file highlight
-                    updatePreview();
-                    break;
-                case 'currentMessage':
-                    renderMessageBox();
-                    break;
-                case 'showAddModal':
-                    addModal.classList.toggle('hidden-modal', !showAddModal);
-                    if (showAddModal) newFileNameInputField.focus();
-                    break;
-                case 'newFileNameInput':
-                    newFileNameInputField.value = newFileNameInput;
-                    break;
-                case 'showDeleteModal':
-                    deleteModal.classList.toggle('hidden-modal', !showDeleteModal);
-                    if (showDeleteModal && fileToDelete) fileToDeleteNameSpan.textContent = fileToDelete;
-                    break;
-                case 'fileToDelete':
-                    if (fileToDelete) fileToDeleteNameSpan.textContent = fileToDelete;
-                    break;
-                case 'showRenameModal':
-                    renameModal.classList.toggle('hidden-modal', !showRenameModal);
-                    if (showRenameModal) {
-                        fileToRenameNameSpan.textContent = fileToRename;
-                        newFileNameForRenameInputField.value = newFileNameForRename;
-                        newFileNameForRenameInputField.focus();
-                        newFileNameForRenameInputField.select(); // Select text for easy renaming
-                    }
-                    break;
-                case 'fileToRename':
-                    if (fileToRename) fileToRenameNameSpan.textContent = fileToRename;
-                    break;
-                case 'newFileNameForRename':
-                    newFileNameForRenameInputField.value = newFileNameForRename;
-                    break;
-                case 'contextMenu':
-                    renderContextMenu();
-                    break;
-                case 'hiddenFiles':
-                    saveHiddenFilesToLocalStorage();
-                    renderFileList();
-                    break;
-                case 'showFileMenu':
-                    fileMenuElement.classList.toggle('hidden-modal', !showFileMenu);
-                    break;
-                case 'editorWidth':
-                    editorPanel.style.width = `${editorWidth}%`;
-                    previewPanel.style.width = `${100 - editorWidth}%`;
-                    break;
-                case 'previewMode':
-                    renderPreviewModeButtons();
-                    iframeWrapper.classList.toggle('items-center', previewMode === 'mobile');
-                    iframeWrapper.classList.toggle('justify-center', previewMode === 'mobile');
-                    previewIframe.classList.toggle('w-[375px]', previewMode === 'mobile');
-                    previewIframe.classList.toggle('h-full', previewMode === 'mobile');
-                    previewIframe.classList.toggle('mx-auto', previewMode === 'mobile');
-                    previewIframe.classList.toggle('w-full', previewMode === 'web');
-                    previewIframe.classList.toggle('h-full', previewMode === 'web');
-                    break;
-                case 'isDownloading':
-                    renderDownloadButton();
-                    break;
-                default:
-                    // For initial render or if a complex interaction requires full refresh
-                    renderAllUI();
-            }
-        }
-
-        function renderAllUI() {
-            // Initial render of all main components
-            renderMessageBox();
-            renderAddModal(); // Hides by default
-            renderDeleteModal(); // Hides by default
-            renderRenameModal(); // Hides by default
-            renderContextMenu(); // Hides by default
-            renderFileList();
-            renderFileMenu(); // Hides by default
-            editorTextarea.value = files[activeFile];
-            activeFileLabel.textContent = activeFile;
-            editorPanel.style.width = `${editorWidth}%`;
-            previewPanel.style.width = `${100 - editorWidth}%`;
-            renderPreviewModeButtons();
-            renderDownloadButton();
-            updatePreview();
-        }
-
-        function renderMessageBox() {
-            if (currentMessage.text) {
-                messageText.textContent = currentMessage.text;
-                messageBoxContainer.className = `fixed top-4 left-1/2 -translate-x-1/2 p-3 rounded-lg text-center font-bold transition-opacity duration-300 z-50 ${
-                    currentMessage.type === 'success' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
-                }`;
-                messageBoxContainer.style.opacity = 1;
-                messageBoxContainer.classList.remove('hidden-modal');
-            } else {
-                messageBoxContainer.classList.add('hidden-modal');
-            }
-        }
-
-        function renderAddModal() { addModal.classList.toggle('hidden-modal', !showAddModal); }
-        function renderDeleteModal() { deleteModal.classList.toggle('hidden-modal', !showDeleteModal); }
-        function renderRenameModal() { renameModal.classList.toggle('hidden-modal', !showRenameModal); }
-
-        function renderContextMenu() {
-            if (contextMenu.visible) {
-                contextMenuElement.style.left = `${contextMenu.x}px`;
-                contextMenuElement.style.top = `${contextMenu.y}px`;
-                contextMenuElement.classList.remove('hidden-modal');
-            } else {
-                contextMenuElement.classList.add('hidden-modal');
-            }
-        }
-
-        function renderFileList() {
-            fileListContainer.innerHTML = ''; // Clear current list
-            Object.keys(files).filter(fileName => !hiddenFiles.includes(fileName)).forEach(fileName => {
-                const fileDiv = document.createElement('div');
-                fileDiv.className = `flex items-center justify-between p-2 rounded-lg my-1 transition-colors group cursor-pointer
-                                    ${activeFile === fileName ? 'bg-gray-700' : 'hover:bg-gray-700'}`;
-                fileDiv.dataset.fileName = fileName; // Store file name for event delegation
-
-                fileDiv.innerHTML = `
-                    <span class="font-semibold transition-colors w-full text-left
-                               ${activeFile === fileName ? 'text-white' : 'text-gray-400'}">
-                        ${fileName}
-                    </span>
-                    <div class="flex gap-2 items-center">
-                        <button class="file-delete-btn text-red-400 hover:text-red-500 transition-opacity p-1
-                                       ${activeFile === fileName ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}">
-                            &times;
-                        </button>
-                    </div>
-                `;
-                fileDiv.addEventListener('click', (e) => {
-                    // Only change active file if click is not on delete button
-                    if (!e.target.classList.contains('file-delete-btn')) {
-                        setState('activeFile', fileDiv.dataset.fileName);
-                        setState('showFileMenu', false); // Close menu on file selection
-                    }
-                });
-                fileDiv.addEventListener('contextmenu', (e) => handleContextMenu(e, fileDiv.dataset.fileName));
-                fileListContainer.appendChild(fileDiv);
-            });
-        }
-
-        function renderFileMenu() { fileMenuElement.classList.toggle('hidden-modal', !showFileMenu); }
-
-        function renderPreviewModeButtons() {
-            mobileViewBtn.classList.toggle('bg-teal-500', previewMode === 'mobile');
-            mobileViewBtn.classList.toggle('text-white', previewMode === 'mobile');
-            mobileViewBtn.classList.toggle('bg-gray-700', previewMode === 'web');
-            mobileViewBtn.classList.toggle('text-gray-300', previewMode === 'web');
-            mobileViewBtn.classList.toggle('hover:bg-gray-600', previewMode === 'web');
-
-            webViewBtn.classList.toggle('bg-teal-500', previewMode === 'web');
-            webViewBtn.classList.toggle('text-white', previewMode === 'web');
-            webViewBtn.classList.toggle('bg-gray-700', previewMode === 'mobile');
-            webViewBtn.classList.toggle('text-gray-300', previewMode === 'mobile');
-            webViewBtn.classList.toggle('hover:bg-gray-600', previewMode === 'mobile');
-        }
-
-        function renderDownloadButton() {
-            if (isDownloading) {
-                downloadSpinner.classList.remove('hidden');
-                downloadIcon.classList.add('hidden');
-                downloadText.textContent = 'Bundling...';
-                downloadProjectBtn.disabled = true;
-                downloadProjectBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                downloadSpinner.classList.add('hidden');
-                downloadIcon.classList.remove('hidden');
-                downloadText.textContent = 'Download Project (ZIP)';
-                downloadProjectBtn.disabled = false;
-                downloadProjectBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        }
-
-        // --- Core Logic Functions (from React component) ---
-
-        const getFullHtml = () => {
-            const cssContent = Object.entries(files)
-                .filter(([fileName]) => fileName.endsWith('.css'))
-                .map(([, content]) => content)
-                .join('\n');
-            
-            const jsContent = Object.entries(files)
-                .filter(([fileName]) => fileName.endsWith('.js'))
-                .map(([, content]) => content)
-                .join('\n');
-
-            return `
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Live Preview</title>
-                    <style>${cssContent}</style>
-                </head>
-                <body>
-                    ${files['index.html'] || ''}
-                    <script>${jsContent}</script>
-                </body>
-                </html>
-            `;
-        };
-
-        const updatePreview = () => {
-            if (previewIframe) {
-                const iframeDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
-                iframeDoc.open();
-                iframeDoc.write(getFullHtml());
-                iframeDoc.close();
-            }
-        };
-
-        const showMessage = (text, type) => {
-            setState('currentMessage', { text, type }, () => {
+        function showMessage(message, color) {
+            messageBox.textContent = message;
+            messageBox.className = `text-center font-medium text-sm transition-opacity duration-300 ${color}`;
+            // Make the message visible and then fade it out after a delay
+            setTimeout(() => {
+                messageBox.style.opacity = '1';
                 setTimeout(() => {
-                    setState('currentMessage', { text: '', type: '' });
-                }, 3000);
+                    messageBox.style.opacity = '0';
+                }, 3000); // 3 seconds
+            }, 100);
+        }
+
+        // Add event listeners for the modal
+        chooseTemplateBtn.addEventListener('click', () => {
+            templateModal.classList.remove('hidden');
+        });
+        closeModalBtn.addEventListener('click', () => {
+            templateModal.classList.add('hidden');
+        });
+        templateModal.addEventListener('click', (e) => {
+            if (e.target === templateModal) {
+                templateModal.classList.add('hidden');
+            }
+        });
+
+        // Add click listeners to template cards
+        templateCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove selected class from all cards
+                templateCards.forEach(c => c.classList.remove('selected'));
+                // Add selected class to the clicked card
+                card.classList.add('selected');
+                
+                currentTemplate = card.dataset.template;
+                updateLivePreview();
+                templateModal.classList.add('hidden');
             });
+        });
+
+        // Add event listener to toggle the custom CSS input
+        customCssBtn.addEventListener('click', () => {
+            customCssContainer.classList.toggle('hidden');
+        });
+
+        // Add event listener for the Copy button
+        copyBtn.addEventListener('click', () => {
+            const htmlContent = generateFullHtml();
+            navigator.clipboard.writeText(htmlContent)
+                .then(() => {
+                    showMessage('HTML copied to clipboard!', 'text-blue-500');
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    showMessage('Copy failed, please try again.', 'text-red-500');
+                });
+        });
+
+        // Add event listener for the Download button
+        downloadBtn.addEventListener('click', () => {
+            const htmlContent = generateFullHtml();
+            const fileName = fileNameInput.value.trim() || 'my-document';
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showMessage('HTML file downloaded successfully!', 'text-green-500');
+        });
+
+        // Update the live preview whenever the content of the editor, page title, or custom CSS changes
+        quill.on('text-change', () => {
+            updateLivePreview();
+        });
+        pageTitleInput.addEventListener('input', () => {
+            updateLivePreview();
+        });
+        customCssInput.addEventListener('input', () => {
+            updateLivePreview();
+        });
+
+        // Initial preview update on page load
+        window.onload = () => {
+            // Set the default selected card
+            document.querySelector(`[data-template="book"]`).classList.add('selected');
+            updateLivePreview();
         };
-
-        // --- Event Handlers (replacing React's event props) ---
-
-        editorTextarea.addEventListener('input', (e) => {
-            const newFiles = { ...files, [activeFile]: e.target.value };
-            setState('files', newFiles);
-        });
-
-        document.getElementById('upload-input').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (file.size > MAX_FILE_SIZE) {
-                showMessage(`File size exceeds 3MB limit.`, 'error');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const fileName = file.name;
-                const newFiles = { ...files, [fileName]: event.target.result };
-                setState('files', newFiles, () => {
-                    setState('activeFile', fileName);
-                    showMessage(`Successfully uploaded ${fileName}!`, 'success');
-                });
-            };
-            reader.readAsText(file);
-        });
-        
-        document.getElementById('add-file-btn').addEventListener('click', () => {
-            setState('showAddModal', true);
-        });
-        document.getElementById('add-modal-cancel').addEventListener('click', () => {
-            setState('showAddModal', false);
-            setState('newFileNameInput', '');
-        });
-        document.getElementById('add-modal-create').addEventListener('click', () => {
-            const newFileName = newFileNameInputField.value.trim();
-            if (!newFileName) {
-                showMessage("File name cannot be empty.", 'error');
-                return;
-            }
-
-            if (files[newFileName]) {
-                showMessage(`File "${newFileName}" already exists.`, 'error');
-            } else {
-                const newFiles = { ...files, [newFileName]: '' };
-                setState('files', newFiles, () => {
-                    setState('activeFile', newFileName);
-                    showMessage(`Created new file: ${newFileName}`, 'success');
-                });
-            }
-            setState('showAddModal', false);
-            setState('newFileNameInput', '');
-        });
-
-        // Event delegation for delete buttons in the file list
-        fileListContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('file-delete-btn')) {
-                const fileName = e.target.closest('div[data-file-name]').dataset.fileName;
-                if (Object.keys(files).length === 1) {
-                    showMessage("Cannot delete the last file.", 'error');
-                    return;
-                }
-                setState('fileToDelete', fileName);
-                setState('showDeleteModal', true);
-            }
-        });
-        document.getElementById('delete-modal-cancel').addEventListener('click', () => {
-            setState('showDeleteModal', false);
-            setState('fileToDelete', null);
-        });
-        document.getElementById('delete-modal-delete').addEventListener('click', () => {
-            const newFiles = { ...files };
-            delete newFiles[fileToDelete];
-            setState('files', newFiles, () => {
-                if (activeFile === fileToDelete) {
-                    const remainingFiles = Object.keys(newFiles);
-                    setState('activeFile', remainingFiles[0]);
-                }
-                showMessage(`Deleted file: ${fileToDelete}`, 'success');
-                setState('showDeleteModal', false);
-                setState('fileToDelete', null);
-            });
-        });
-
-        // Context menu handlers
-        function handleContextMenu(e, fileName) {
-            e.preventDefault();
-            setState('contextMenu', {
-                visible: true,
-                x: e.clientX,
-                y: e.clientY,
-                fileName: fileName,
-            });
-        }
-        document.getElementById('context-rename').addEventListener('click', () => {
-            if (contextMenu.fileName) {
-                setState('fileToRename', contextMenu.fileName);
-                setState('newFileNameForRename', contextMenu.fileName);
-                setState('showRenameModal', true);
-            }
-            setState('contextMenu', { ...contextMenu, visible: false });
-        });
-        document.getElementById('context-delete').addEventListener('click', () => {
-            if (contextMenu.fileName) {
-                if (Object.keys(files).length === 1) {
-                    showMessage("Cannot delete the last file.", 'error');
-                    return;
-                }
-                setState('fileToDelete', contextMenu.fileName);
-                setState('showDeleteModal', true);
-            }
-            setState('contextMenu', { ...contextMenu, visible: false });
-        });
-        document.getElementById('context-hide').addEventListener('click', () => {
-            if (contextMenu.fileName) {
-                const fileNameToHide = contextMenu.fileName;
-                const newHiddenFiles = [...hiddenFiles, fileNameToHide];
-                setState('hiddenFiles', newHiddenFiles, () => {
-                    if (activeFile === fileNameToHide) {
-                        const remainingFiles = Object.keys(files).filter(f => f !== fileNameToHide && !newHiddenFiles.includes(f));
-                        setState('activeFile', remainingFiles.length > 0 ? remainingFiles[0] : Object.keys(files).find(f => f !== fileNameToHide));
-                    }
-                    showMessage(`Hidden file: ${fileNameToHide}`, 'success');
-                });
-            }
-            setState('contextMenu', { ...contextMenu, visible: false });
-        });
-        // Click anywhere to hide context menu
-        document.addEventListener('click', (e) => {
-            if (contextMenu.visible && !contextMenuElement.contains(e.target)) {
-                setState('contextMenu', { ...contextMenu, visible: false });
-            }
-        });
-
-        document.getElementById('rename-modal-cancel').addEventListener('click', () => {
-            setState('showRenameModal', false);
-            setState('fileToRename', null);
-            setState('newFileNameForRename', '');
-        });
-        document.getElementById('rename-modal-rename').addEventListener('click', () => {
-            const newName = newFileNameForRenameInputField.value.trim();
-            if (!newName) {
-                showMessage("File name cannot be empty.", 'error');
-                return;
-            }
-            if (files[newName]) {
-                showMessage(`File "${newName}" already exists.`, 'error');
-                return;
-            }
-
-            const oldContent = files[fileToRename];
-            const newFiles = { ...files };
-            delete newFiles[fileToRename];
-            newFiles[newName] = oldContent;
-
-            setState('files', newFiles, () => {
-                setState('activeFile', newName);
-                showMessage(`Renamed file to: ${newName}`, 'success');
-                setState('showRenameModal', false);
-                setState('fileToRename', null);
-                setState('newFileNameForRename', '');
-            });
-        });
-
-        document.getElementById('toggle-file-menu-btn').addEventListener('click', () => {
-            setState('showFileMenu', !showFileMenu);
-        });
-        // Click outside file menu to close it
-        document.addEventListener('mousedown', (event) => {
-            if (fileMenuElement && !fileMenuElement.contains(event.target) && showFileMenu) {
-                setState('showFileMenu', false);
-            }
-        });
-
-        document.getElementById('mobile-view-btn').addEventListener('click', () => setState('previewMode', 'mobile'));
-        document.getElementById('web-view-btn').addEventListener('click', () => setState('previewMode', 'web'));
-
-        document.getElementById('download-project-btn').addEventListener('click', async () => {
-            try {
-                if (typeof window.JSZip === 'undefined' || typeof window.saveAs === 'undefined') {
-                    showMessage('Required libraries are still loading. Please wait a moment.', 'error');
-                    return;
-                }
-                setState('isDownloading', true);
-                const zip = new window.JSZip();
-                
-                Object.keys(files).forEach(fileName => {
-                    zip.file(fileName, files[fileName]);
-                });
-                
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                window.saveAs(zipBlob, 'web-project.zip');
-
-                showMessage('Project downloaded successfully!', 'success');
-            } catch (error) {
-                console.error('Download failed:', error);
-                showMessage('Failed to download project.', 'error');
-            } finally {
-                setState('isDownloading', false);
-            }
-        });
-
-        // --- Resizer Logic ---
-        let isResizing = false;
-        resizerElement.addEventListener('mousedown', (e) => {
-            isResizing = true;
-            const startX = e.clientX;
-            const startWidth = editorPanel.offsetWidth;
-
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-        });
-
-        function handleMouseMove(e) {
-            if (!isResizing) return;
-            const newWidth = editorPanel.offsetWidth + (e.clientX - resizerElement.getBoundingClientRect().left);
-            const newWidthPercent = (newWidth / window.innerWidth) * 100;
-            const clampedWidth = Math.min(Math.max(20, newWidthPercent), 80); // Clamp between 20% and 80%
-            setState('editorWidth', clampedWidth);
-        }
-
-        function handleMouseUp() {
-            isResizing = false;
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        }
-
-        // --- Local Storage Persistence ---
-        function loadFilesFromLocalStorage() {
-            try {
-                const savedFiles = localStorage.getItem('htmlEditorFiles');
-                if (savedFiles) {
-                    files = JSON.parse(savedFiles);
-                }
-            } catch (e) {
-                console.error('Failed to load files from local storage:', e);
-            }
-        }
-
-        function saveFilesToLocalStorage() {
-            try {
-                localStorage.setItem('htmlEditorFiles', JSON.stringify(files));
-            } catch (e) {
-                console.error('Failed to save files to local storage:', e);
-            }
-        }
-
-        function loadHiddenFilesFromLocalStorage() {
-            try {
-                const savedHiddenFiles = localStorage.getItem('htmlEditorHiddenFiles');
-                if (savedHiddenFiles) {
-                    hiddenFiles = JSON.parse(savedHiddenFiles);
-                }
-            } catch (e) {
-                console.error('Failed to load hidden files from local storage:', e);
-            }
-        }
-
-        function saveHiddenFilesToLocalStorage() {
-            try {
-                localStorage.setItem('htmlEditorHiddenFiles', JSON.stringify(hiddenFiles));
-            } catch (e) {
-                console.error('Failed to save hidden files to local storage:', e);
-            }
-        }
-
-        // --- External Script Loading (JSZip, FileSaver) ---
-        function loadScript(src, callback) {
-            const script = document.createElement('script');
-            script.src = src;
-            script.onload = callback;
-            script.onerror = () => console.error(`Failed to load script: ${src}`);
-            document.body.appendChild(script);
-        }
-
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            loadFilesFromLocalStorage();
-            loadHiddenFilesFromLocalStorage();
-            renderAllUI(); // Initial render of the entire UI
-
-            // Dynamically load JSZip and FileSaver.js
-            loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', () => {
-                loadScript('https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js', () => {
-                    console.log('JSZip and FileSaver loaded!');
-                });
-            });
-        });
     </script>
 </body>
 </html>
